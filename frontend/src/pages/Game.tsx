@@ -12,7 +12,10 @@ const Game = () => {
 
     const socket = useSocket()
     const [chess, setChess] = useState(new Chess())
+    const [start, setStart] = useState(false)
+    const [waiting, setWaiting] = useState(false)
     const [board, setBoard] = useState(chess.board())
+    const [color, setColor] = useState("");
 
     useEffect(() => {
 
@@ -24,8 +27,10 @@ const Game = () => {
             const message = JSON.parse(event.data)
             switch (message.type) {
                 case INIT_GAME:
-                    // setChess(new Chess())
                     setBoard(chess.board())
+                    setColor(message.payload.color)
+                    setStart(true)
+                    setWaiting(false)
                     break;
                 case MOVE:
                     const move = message.payload
@@ -44,20 +49,25 @@ const Game = () => {
     return (
         <div className='text-white flex justify-center items-center min-h-screen'>
             <div className='max-w-screen-lg w-full'>
-                <div className='grid grid-cols-6 gap-4'>
+                <div className='grid lg:grid-cols-6 grid-cols-1 gap-4'>
                     <div className="col-span-4">
-                        <ChessBoard chess={chess} setBoard={setBoard} board={board} socket={socket} />
+                        <ChessBoard chess={chess} setBoard={setBoard} board={board} socket={socket} color={color} />
                     </div>
                     <div className='flex flex-col items-center justify-center col-span-2'>
                         <div>
-                            <button className='py-4 px-8 text-xl font-bold bg-green-500 rounded-md' onClick={() => {
-                                socket.send(JSON.stringify({
-                                    type: INIT_GAME
-                                }))
-                            }}>Play</button>
+                            {
+                                waiting && <div>Waiting for opponent</div>
+                            }
+                            {
+                                !start && !waiting && <button className='py-4 px-8 text-xl font-bold bg-green-500 rounded-md' onClick={(e: any) => {
+                                    socket.send(JSON.stringify({
+                                        type: INIT_GAME
+                                    }))
+                                    setWaiting(true)
+                                }}>Play</button>
+                            }
                         </div>
                     </div>
-
                 </div>
 
             </div>
